@@ -18,11 +18,18 @@ void RCC_Init(void)
   // Enable PLL
   RCC->CR |= RCC_CR_PLLON;
   while(!(RCC->CR & RCC_CR_PLLRDY)); // Wait until PLL is ready
+
+  // Set AHB, APB1, APB2 prescalers
+  RCC->CFGR |= RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1;
+
+  // Select PLL as system clock source
+  RCC->CFGR |= RCC_CFGR_SW_PLL;
+  while(!(RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SW_PLL); // Wait until PLL is used as system clock source
 }
 
 int main(void)
 {
-
+  RCC_Init(); // Initialize system clock to 100 MHz
   while (1)
   {
 

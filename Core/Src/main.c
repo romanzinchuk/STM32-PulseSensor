@@ -27,9 +27,29 @@ void RCC_Init(void)
   while(!(RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SW_PLL); // Wait until PLL is used as system clock source
 }
 
+void Peripheral_Clock_Init(void)
+{
+
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; // Enable clock for GPIOA
+  RCC->APB1ENR |= RCC_APB1ENR_USART2EN; // Enable clock for USART2
+  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; // Enable clock for ADC1
+
+}
+void GPIOA_Init(void)
+{
+
+  GPIOA->MODER |= (3 << 0); // Set PA0 to analog mode
+  GPIOA->MODER |= (2 << (2 * 2)) | (2 << (2 * 3)); // Set PA2 and PA3 to alternate function mode
+  GPIOA->AFR[0] |= (7 << (2 * 4)) | (7 << (3 * 4)); // Set alternate function for PA2 and PA3 to AF7 (USART2)
+
+}
+
 int main(void)
 {
   RCC_Init(); // Initialize system clock to 100 MHz
+  Peripheral_Clock_Init(); // Initialize peripheral clocks
+  GPIOA_Init(); // Initialize GPIOA
+
   while (1)
   {
 

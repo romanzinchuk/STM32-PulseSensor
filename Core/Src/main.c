@@ -68,6 +68,20 @@ void USART2_SendChar(char c)
   USART2->DR = c;
 }
 
+void ADC1_Init(void)
+{
+  ADC1->SMPR2 |= (4 << ADC_SMPR2_SMP0_Posd); // Set sample time
+  ADC1->SQR1 &= ~ADC_SQR1_L;
+  ADC1->SQR3 &= ~ADC_SQR3_SQ1;
+  ADC1->CR2 |= ADC_CR2_ADON; // Enable ADC
+}
+
+void ADC1_Read(void)
+{
+  ADC1->CR2 |= ADC_CR2_SWSTART;// Start ADC conversion
+  while(!(ADC1->SR & ADC_SR_EOC));
+  return ADC1->DR; // Return ADC conversion result
+}
 void Error_Handler(void)
 {
   __disable_irq();

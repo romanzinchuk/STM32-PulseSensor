@@ -70,7 +70,7 @@ void USART2_SendChar(char c)
 
 void ADC1_Init(void)
 {
-  ADC1->SMPR2 |= (4 << ADC_SMPR2_SMP0_Posd); // Set sample time
+  ADC1->SMPR2 |= (4 << ADC_SMPR2_SMP0_Pos); // Set sample time
   ADC1->SQR1 &= ~ADC_SQR1_L;
   ADC1->SQR3 &= ~ADC_SQR3_SQ1;
   ADC1->CR2 |= ADC_CR2_ADON; // Enable ADC

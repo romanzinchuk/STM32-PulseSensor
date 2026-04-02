@@ -55,6 +55,19 @@ int main(void)
 
   }
 }
+
+void USART2_Init(void)
+{
+  USART2->BRR = 0x01B2; // Set baud rate to 115200
+  USART2->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE; // Enable transmitter, receiver and USART
+}
+
+void USART2_SendChar(char c)
+{
+  while (!(USART2->SR & USART_SR_TXE)); // Wait until transmit data register is empty
+  USART2->DR = c;
+}
+
 void Error_Handler(void)
 {
   __disable_irq();

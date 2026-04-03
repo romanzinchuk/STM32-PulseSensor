@@ -1,5 +1,6 @@
 #include "main.h"
 #include "stm32f4xx.h"
+#include <stdio.h>
 
 void RCC_Init(void)
 {
@@ -44,11 +45,18 @@ void GPIOA_Init(void)
 
 }
 
+void USART2_Init(void);
+void USART2_SendChar(char c);
+void ADC1_Init(void);
+uint16_t ADC1_Read(void);
 int main(void)
 {
   RCC_Init(); // Initialize system clock to 100 MHz
   Peripheral_Clock_Init(); // Initialize peripheral clocks
   GPIOA_Init(); // Initialize GPIOA
+
+  USART2_Init(); // Initialize USART2
+  ADC1_Init(); // Initialize ADC1
 
   while (1)
   {
@@ -62,10 +70,12 @@ void USART2_Init(void)
   USART2->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE; // Enable transmitter, receiver and USART
 }
 
-void USART2_SendChar(char c)
+void USART2_SendString(char* str)
 {
-  while (!(USART2->SR & USART_SR_TXE)); // Wait until transmit data register is empty
-  USART2->DR = c;
+  while (*str)
+  {
+    USART2_SendChar(*str++);// Send each character in the string
+  }
 }
 
 void ADC1_Init(void)
@@ -76,7 +86,7 @@ void ADC1_Init(void)
   ADC1->CR2 |= ADC_CR2_ADON; // Enable ADC
 }
 
-void ADC1_Read(void)
+uint16_t ADC1_Read(void)
 {
   ADC1->CR2 |= ADC_CR2_SWSTART;// Start ADC conversion
   while(!(ADC1->SR & ADC_SR_EOC));

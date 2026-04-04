@@ -61,7 +61,9 @@ int main(void)
 
   USART2_Init(); // Initialize USART2
   ADC1_Init(); // Initialize ADC1
-
+  TIM5_Init();
+  
+  char uart_buf[50];
   while (1)
   {
     if (adc_flag) 

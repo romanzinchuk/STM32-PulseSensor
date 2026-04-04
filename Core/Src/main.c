@@ -2,6 +2,8 @@
 #include "stm32f4xx.h"
 #include <stdio.h>
 
+volatile uint8_t adc_flag = 0;
+
 void RCC_Init(void)
 {
   // Enable HSI oscillator
@@ -49,6 +51,8 @@ void USART2_Init(void);
 void USART2_SendChar(char c);
 void ADC1_Init(void);
 uint16_t ADC1_Read(void);
+void TIM5_Init(void);
+
 int main(void)
 {
   RCC_Init(); // Initialize system clock to 100 MHz
@@ -60,7 +64,14 @@ int main(void)
 
   while (1)
   {
-
+    if (adc_flag) 
+      {
+          adc_flag = 0; // Скидаємо прапорець
+          
+          uint16_t pulse_val = ADC1_Read(); 
+          sprintf(uart_buf, "%u\r\n", pulse_val); 
+          USART2_SendString(uart_buf);
+      }
   }
 }
 
@@ -92,6 +103,31 @@ uint16_t ADC1_Read(void)
   while(!(ADC1->SR & ADC_SR_EOC));
   return ADC1->DR; // Return ADC conversion result
 }
+
+void TIM5_Init(void)
+{
+  RCC->APB1ENR |= RCC_APB1ENR_TIM5EN; // Enable clock for TIM5
+
+
+  TIM5->PSC = 100 - 1; // Set prescaler to 100 (assuming 100 MHz clock, this gives 1 MHz timer clock)
+  TIM5->ARR = 2000 - 1; // Set auto-reload value to 2000 (this gives a timer overflow every 2 ms)
+
+  TIM5->DIER |= TIM_DIER_UIE;
+  
+  NVIC_EnableIRQ(TIM5_IRQn) // Enable TIM5 interrupt in NVIC
+
+  TIM5->CR1 |= TIM_CR1_CEN; // Start TIM5
+}
+
+void TIM5_IRQHandler(void)
+{
+  if (TIM5->SR & TIM_SR_UIF) 
+  {
+    TIM5->SR &= ~TIM_SR_UIF;  // Clear update interrupt flag
+    adc_flag = 1;
+  }
+}
+
 void Error_Handler(void)
 {
   __disable_irq();

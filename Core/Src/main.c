@@ -3,6 +3,12 @@
 #include <stdio.h>
 
 volatile uint8_t adc_flag = 0;
+float ema_alpha = 0.1f; 
+float ema_value = 0.0f;
+
+float dc_r = 0.95f; 
+float dc_filter_output = 0.0f;
+float prev_ema_value = 0.0f;
 
 void RCC_Init(void)
 {
@@ -68,11 +74,19 @@ int main(void)
   {
     if (adc_flag) 
       {
-          adc_flag = 0; // Скидаємо прапорець
+          adc_flag = 0;
           
           uint16_t pulse_val = ADC1_Read(); 
-          sprintf(uart_buf, "%u\r\n", pulse_val); 
-          USART2_SendString(uart_buf);
+        
+          ema_value = (ema_alpha * (float)pulse_val) + ((1.0f - ema_alpha) * ema_value);// Update EMA value
+
+       
+          dc_filter_output = ema_value - prev_ema_value + (dc_r * dc_filter_output);// Update DC filter output
+          prev_ema_value = ema_value;// Store current EMA value for next iteration
+
+        
+          sprintf(uart_buf, "%.2f\r\n", dc_filter_output); // Format the output string with the DC filter output value
+          USART2_SendString(uart_buf);//  Send the formatted string over USART2
       }
   }
 }

@@ -83,6 +83,12 @@ void USART2_Init(void)
   USART2->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE; // Enable transmitter, receiver and USART
 }
 
+void USART2_SendChar(char c)
+{
+  while (!(USART2->SR & USART_SR_TXE)); // Wait until transmit data register is empty
+  USART2->DR = c;
+}
+
 void USART2_SendString(char* str)
 {
   while (*str)
@@ -116,7 +122,7 @@ void TIM5_Init(void)
 
   TIM5->DIER |= TIM_DIER_UIE;
   
-  NVIC_EnableIRQ(TIM5_IRQn) // Enable TIM5 interrupt in NVIC
+  NVIC_EnableIRQ(TIM5_IRQn); // Enable TIM5 interrupt in NVIC
 
   TIM5->CR1 |= TIM_CR1_CEN; // Start TIM5
 }

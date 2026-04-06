@@ -33,7 +33,7 @@ void RCC_Init(void)
 
   // Select PLL as system clock source
   RCC->CFGR |= RCC_CFGR_SW_PLL;
-  while(!(RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SW_PLL); // Wait until PLL is used as system clock source
+  while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL); // Wait until PLL is used as system clock source
 }
 
 void Peripheral_Clock_Init(void)
@@ -47,14 +47,15 @@ void Peripheral_Clock_Init(void)
 void GPIOA_Init(void)
 {
 
-  GPIOA->MODER |= (3 << 0); // Set PA0 to analog mode
-  GPIOA->MODER |= (2 << (2 * 2)) | (2 << (2 * 3)); // Set PA2 and PA3 to alternate function mode
-  GPIOA->AFR[0] |= (7 << (2 * 4)) | (7 << (3 * 4)); // Set alternate function for PA2 and PA3 to AF7 (USART2)
+  GPIOA->MODER |= (3 << GPIO_MODER_MODER0_Pos); // PA0 as analog mode for ADC input
+  GPIOA->MODER |= (2 << GPIO_MODER_MODER2_Pos) | (2 << GPIO_MODER_MODER3_Pos); // PA2 and PA3 as alternate function mode
+  GPIOA->AFR[0] |= (7 << GPIO_AFRL_AFSEL2_Pos) | (7 << GPIO_AFRL_AFSEL3_Pos); // Set alternate function for PA2 and PA3 to AF7 (USART2)
 
 }
 
 void USART2_Init(void);
 void USART2_SendChar(char c);
+void USART2_SendString(char* str);
 void ADC1_Init(void);
 uint16_t ADC1_Read(void);
 void TIM5_Init(void);
@@ -72,21 +73,33 @@ int main(void)
   char uart_buf[50];
   while (1)
   {
-    if (adc_flag) 
+      if (adc_flag) 
       {
           adc_flag = 0;
-          
           uint16_t pulse_val = ADC1_Read(); 
         
-          ema_value = (ema_alpha * (float)pulse_val) + ((1.0f - ema_alpha) * ema_value);// Update EMA value
+          ema_value = (ema_alpha * (float)pulse_val) + ((1.0f - ema_alpha) * ema_value);
+          dc_filter_output = ema_value - prev_ema_value + (dc_r * dc_filter_output);
+          prev_ema_value = ema_value;
 
-       
-          dc_filter_output = ema_value - prev_ema_value + (dc_r * dc_filter_output);// Update DC filter output
-          prev_ema_value = ema_value;// Store current EMA value for next iteration
-
-        
-          sprintf(uart_buf, "%.2f\r\n", dc_filter_output); // Format the output string with the DC filter output value
-          USART2_SendString(uart_buf);//  Send the formatted string over USART2
+          int integer_part = (int)dc_filter_output;
+          int fraction_part = (int)((dc_filter_output - integer_part) * 100);
+          
+          if (fraction_part < 0) 
+          {
+              fraction_part = -fraction_part;
+              if (integer_part == 0 && dc_filter_output < 0) {
+                  sprintf(uart_buf, "-0.%02d\r\n", fraction_part);
+              } else {
+                  sprintf(uart_buf, "%d.%02d\r\n", integer_part, fraction_part);
+              }
+          } 
+          else 
+          {
+              sprintf(uart_buf, "%d.%02d\r\n", integer_part, fraction_part);
+          }
+          
+          USART2_SendString(uart_buf);
       }
   }
 }

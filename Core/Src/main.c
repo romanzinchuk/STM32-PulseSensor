@@ -62,6 +62,8 @@ void TIM5_Init(void);
 
 int main(void)
 {
+  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2)); // Enable FPU (Floating Point Unit) for Cortex-M4
+
   RCC_Init(); // Initialize system clock to 100 MHz
   Peripheral_Clock_Init(); // Initialize peripheral clocks
   GPIOA_Init(); // Initialize GPIOA
@@ -106,7 +108,7 @@ int main(void)
 
 void USART2_Init(void)
 {
-  USART2->BRR = 0x01B2; // Set baud rate to 115200
+  USART2->BRR = 50000000 / 115200; // Set baud rate to 115200 (assuming 50 MHz APB1 clock)
   USART2->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE; // Enable transmitter, receiver and USART
 }
 
@@ -158,7 +160,7 @@ void TIM5_IRQHandler(void)
 {
   if (TIM5->SR & TIM_SR_UIF) 
   {
-    TIM5->SR &= ~TIM_SR_UIF;  // Clear update interrupt flag
+    TIM5->SR = ~TIM_SR_UIF;  // Clear update interrupt flag
     adc_flag = 1;
   }
 }
